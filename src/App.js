@@ -1,4 +1,3 @@
-import './App.scss';
 import { makeStyles } from '@material-ui/core/styles';
 import TallyDetail from './components/TallyDetail';
 

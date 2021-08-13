@@ -169,7 +169,7 @@ const AddTally = ({open, handleClose, handleSubmitSuccess}) => {
     }
 
     dispatch(addCaterogy(params));
-    handleSubmitSuccess();
+    handleSubmitSuccess(formValues.time);
     handleCloseModal();
   };
   return (

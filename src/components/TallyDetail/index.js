@@ -146,6 +146,7 @@ export default function TallyTable() {
   const analyzeData = useMemo(() => handleAnalyze(rows, categories), [rows, categories]);
 
   const handleDateChange = (val) => {
+    console.log('handleDateChange', val);
     setSelectedDate(val);
   }
 
@@ -156,7 +157,7 @@ export default function TallyTable() {
       value,
     });
   }
-  // 添加账单modal回调
+  // 添加账单modal的回调函数
   const handleOpen = () => {
     setOpen(true);
   };
@@ -165,17 +166,25 @@ export default function TallyTable() {
     setOpen(false);
   };
 
+  const handleAddTallySuccess = (date) => {
+    setSelectedDate(date);
+  }
 
-  // 条件变化时过滤列表数据
-  const handleFilterRows = useCallback(() => {
+  const filterRowsFn = () => {
     let data = formatInfo(tallyInfo, categories);
     if (categoryInfo.value) {
       data = data.filter(item => item.categoryId === categoryInfo.value);
     }
     data = filterMonthInfo(data, selectedDate);
-    console.log('data', data);
     setRows(data);
-  }, [categoryInfo.value, selectedDate, tallyInfo, categories])
+  };
+  // 条件变化时筛选列表数据
+  const handleFilterRows = useCallback(filterRowsFn, [
+    categoryInfo.value,
+    selectedDate,
+    tallyInfo,
+    categories
+  ])
 
   useEffect(() => {
     handleFilterRows();
@@ -281,7 +290,7 @@ export default function TallyTable() {
       </section>
       <TallyAnalyze analyzeData={analyzeData} />
     </div>
-    <AddTallyModal open={open} handleClose={handleClose} handleSubmitSuccess={handleFilterRows} />
+    <AddTallyModal open={open} handleClose={handleClose} handleSubmitSuccess={handleAddTallySuccess} />
     </>
   );
 }

@@ -13,19 +13,22 @@ export default function TallyAnalyze({analyzeData}) {
   const { data, total } = analyzeData;
   const classes = useStyles();
 
-
   return (
     <div className={classes.root}>
       <Typography variant="h4" gutterBottom>
         支出排行
       </Typography>
       {
-        data.map(item => (
-          <React.Fragment key={item.categoryId}>
-          <p>{item.category}  共{item.frequency}笔  占比：{(item.number)/(total)*100}%</p>
-          <LinearProgress variant="determinate" value={(item.number)/(total)*100} />
-          </React.Fragment>
-        ))
+        data.length > 0
+        ? data.map(item => (
+            <React.Fragment key={item.categoryId}>
+              <p>{item.category}  共{item.frequency}笔  占比：{(item.number)/(total)*100}%</p>
+              <LinearProgress variant="determinate" value={(item.number)/(total)*100} />
+            </React.Fragment>
+          ))
+        : <Typography variant="h6" gutterBottom>
+            暂无数据
+          </Typography>
       }
     </div>
   );
