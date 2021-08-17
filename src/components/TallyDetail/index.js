@@ -68,7 +68,7 @@ function formatInfo(info, categories) {
     return {
       ...item,
       category,
-      categoryId: categoryObj.id,
+      categoryId: categoryObj?.id,
       id: index,
     }
   }).sort((a, b) => a.time - b.time); 
