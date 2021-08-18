@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useState, useEffect } from "react";
+import { useToasts } from 'react-toast-notifications';
 import { makeStyles } from '@material-ui/core/styles';
-import { addCaterogy } from '../../store/actions';
+import addTally from '../../model/add-tally';
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -76,14 +76,11 @@ const useStyles = makeStyles((theme) => ({
 
 const today = formatDate(new Date());
 
-const AddTally = ({open, handleClose, handleSubmitSuccess}) => {
-  const dispatch = useDispatch()
+const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
   const classes = useStyles();
-  const categories = useSelector(state => state.categories);
 
-  const defaultCategoryList = categories?.filter(item => item.type === 0);
   const [categoryInfo, setCategoryInfo] = useState({
-    categoryList: defaultCategoryList,
+    categoryList: [],
     value: '',
     mark: 0,
   });
@@ -93,7 +90,10 @@ const AddTally = ({open, handleClose, handleSubmitSuccess}) => {
     time: new Date(),
     type: '0',
   };
+  // 表单信息
   const [formValues, setFormValues] = useState(defaultFormValues);
+  // toast提示
+  const { addToast } = useToasts();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -143,7 +143,7 @@ const AddTally = ({open, handleClose, handleSubmitSuccess}) => {
     setFormValues(defaultFormValues);
     setAmount('');
     setCategoryInfo({
-      categoryList: defaultCategoryList,
+      categoryList: categories,
       value: '',
       mark: 0,
     })
@@ -152,8 +152,8 @@ const AddTally = ({open, handleClose, handleSubmitSuccess}) => {
     reset();
     handleClose();
   }
-
-  const handleSubmit = (event) => {
+  // submit new tally
+  const handleSubmit = async (event) => {
     event.preventDefault();
     let lastAmount = 0;
     if (categoryInfo.mark === 0) {
@@ -167,12 +167,39 @@ const AddTally = ({open, handleClose, handleSubmitSuccess}) => {
       amount: parseFloat(lastAmount),
       category: categoryInfo.value
     }
-
-    dispatch(addCaterogy(params));
+    const res = await addTally(params)
+      .catch(err => {
+        addToast(`获取账单详情失败：${err.stack}`, {
+          appearance: 'error',
+          autoDismiss: true,
+        });
+      });
+    if (res?.code === 0) {
+      addToast('添加账单成功', {
+        appearance: 'success',
+        autoDismiss: true,
+      });
+    } else {
+      addToast('添加账单失败', {
+        appearance: 'error',
+        autoDismiss: true,
+      });
+    }
     handleSubmitSuccess(formValues.time);
     handleCloseModal();
   };
+
+    // 初始化账单分类信息
+    useEffect(() => {
+      setCategoryInfo({
+        categoryList: categories?.filter(item => item.type === 0),
+        value: '',
+        mark: 0,
+      });
+    }, [categories]);
+
   return (
+    <>
     <Modal
       className={classes.modal}
       open={open}
@@ -285,6 +312,20 @@ const AddTally = ({open, handleClose, handleSubmitSuccess}) => {
         </div>
       </form>
     </Modal>
+    {/* <Snackbar
+      anchorOrigin={{vertical: 'top', horizontal: 'center'}}
+      open={snackInfo.open}
+      onClose={handleClose}
+      message={snackInfo.msg}
+      action={
+        <React.Fragment>
+          <IconButton size="small" aria-label="close" color="inherit" onClick={handleClose}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </React.Fragment>
+      }
+    /> */}
+    </>
   );
 };
 

@@ -22,11 +22,14 @@ import TallyAnalyze from '../TallyAnalyze';
 import { Button } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles(theme => ({
   root: {
     padding: '1rem',
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
+    [theme.breakpoints.up('md')]: {
+      flexDirection: 'row',
+    },
     justifyContent: 'space-between',
   },
   table: {
@@ -46,9 +49,10 @@ const useStyles = makeStyles({
   dataPanel: {
     display: 'flex',
     flexDirection: 'column',
-    width: '60%',
-  },
-  tableContainer: {
+    width: '100%',
+    [theme.breakpoints.up('md')]: {
+      width: '60%',
+    },
   },
   numContainer: {
     display: 'flex',
@@ -58,7 +62,7 @@ const useStyles = makeStyles({
   addBtnLabel: {
     width: '60px',
   }
-});
+}));
 // 格式化列表数据
 function formatInfo(info, categories) {
   return info?.map((item, index) => {
@@ -68,7 +72,7 @@ function formatInfo(info, categories) {
     return {
       ...item,
       category,
-      categoryId: categoryObj.id,
+      categoryId: categoryObj?.id,
       id: index,
     }
   }).sort((a, b) => a.time - b.time); 
@@ -131,10 +135,10 @@ export default function TallyTable() {
   const categories = useSelector(state => state.categories);
 
   const [rows, setRows] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date('2019-07-01'));
 
   const [categoryInfo, setCategoryInfo] = useState({
-    categoryList: categories,
+    categoryList: [],
     value: '',
   });
 
@@ -185,6 +189,13 @@ export default function TallyTable() {
     tallyInfo,
     categories
   ])
+  // 初始化账单分类信息
+  useEffect(() => {
+    setCategoryInfo({
+      categoryList: categories,
+      value: '',
+    });
+  }, [categories]);
 
   useEffect(() => {
     handleFilterRows();
@@ -290,7 +301,8 @@ export default function TallyTable() {
       </section>
       <TallyAnalyze analyzeData={analyzeData} />
     </div>
-    <AddTallyModal open={open} handleClose={handleClose} handleSubmitSuccess={handleAddTallySuccess} />
+    <AddTallyModal open={open} categories={categories}
+      handleClose={handleClose} handleSubmitSuccess={handleAddTallySuccess} />
     </>
   );
 }
