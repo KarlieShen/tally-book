@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch  } from 'react-redux';
+import { addCaterogy } from '../../store/actions';
 import { useToasts } from 'react-toast-notifications';
 import { makeStyles } from '@material-ui/core/styles';
 import addTally from '../../model/add-tally';
@@ -78,6 +80,7 @@ const today = formatDate(new Date());
 
 const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
   const classes = useStyles();
+  const dispatch = useDispatch()
 
   const [categoryInfo, setCategoryInfo] = useState({
     categoryList: [],
@@ -179,6 +182,7 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
         appearance: 'success',
         autoDismiss: true,
       });
+      dispatch(addCaterogy(params));
     } else {
       addToast('添加账单失败', {
         appearance: 'error',
