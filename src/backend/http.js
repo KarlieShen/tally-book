@@ -10,10 +10,6 @@ const http = Axios.create({
 });
 
 http.interceptors.request.use((config) => {
-  console.log('request--->', JSON.stringify({
-    url: config.url,
-    data: config.data,
-  }));
   const axiosConfig = config;
   axiosConfig.baseUrl = BASE_URL;
   axiosConfig.withCredentials = true;
@@ -25,14 +21,14 @@ http.interceptors.request.use((config) => {
   return axiosConfig;
 });
 
-http.interceptors.response.use((response) => {
-  const { status, data } = response;
-  console.log('response--->', JSON.stringify({
-    status,
-    data,
-  }));
-  return response;
-});
+// http.interceptors.response.use((response) => {
+//   const { status, data } = response;
+//   console.log('response--->', JSON.stringify({
+//     status,
+//     data,
+//   }));
+//   return response;
+// });
 
 export const post = async (
   url,
