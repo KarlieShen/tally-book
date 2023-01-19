@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch  } from 'react-redux';
-import { addCaterogy } from '../../store/actions';
-import { useToasts } from 'react-toast-notifications';
+// import { useDispatch  } from 'react-redux';
+// import { addCategory } from '../../store/actions';
 import { makeStyles } from '@material-ui/core/styles';
 import addTally from '../../model/add-tally';
 import Grid from "@material-ui/core/Grid";
@@ -80,7 +79,7 @@ const today = formatDate(new Date());
 
 const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
   const classes = useStyles();
-  const dispatch = useDispatch()
+  // const dispatch = useDispatch();
 
   const [categoryInfo, setCategoryInfo] = useState({
     categoryList: [],
@@ -95,8 +94,6 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
   };
   // 表单信息
   const [formValues, setFormValues] = useState(defaultFormValues);
-  // toast提示
-  const { addToast } = useToasts();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -172,22 +169,10 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
     }
     const res = await addTally(params)
       .catch(err => {
-        addToast(`获取账单详情失败：${err.stack}`, {
-          appearance: 'error',
-          autoDismiss: true,
-        });
       });
     if (res?.code === 0) {
-      addToast('添加账单成功', {
-        appearance: 'success',
-        autoDismiss: true,
-      });
-      dispatch(addCaterogy(params));
+      // dispatch(addCategory(params));
     } else {
-      addToast('添加账单失败', {
-        appearance: 'error',
-        autoDismiss: true,
-      });
     }
     handleSubmitSuccess(formValues.time);
     handleCloseModal();

@@ -12,11 +12,10 @@ import Select from "@material-ui/core/Select";
 import FormControl from '@material-ui/core/FormControl';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import MenuItem from "@material-ui/core/MenuItem";
-import AddIcon from '@material-ui/icons/Add';
 import DateFnsUtils from '@date-io/date-fns';
 import { DatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import { formatDate } from '../../utils/util';
-import { TALLY_TYPE_MAP, TALLY_TYPE_MATCH } from '../../utils/constants';
+import { TALLY_TYPE_MATCH } from '../../utils/constants';
 import AddTallyModal from '../AddTally';
 import TallyAnalyze from '../TallyAnalyze';
 import { Button } from '@material-ui/core';
@@ -25,12 +24,13 @@ import Typography from '@material-ui/core/Typography';
 const useStyles = makeStyles(theme => ({
   root: {
     padding: '1rem',
+    minWidth: '300px',
     display: 'flex',
     flexDirection: 'column',
     [theme.breakpoints.up('md')]: {
       flexDirection: 'row',
+      justifyContent: 'space-between',
     },
-    justifyContent: 'space-between',
   },
   table: {
     minWidth: 500,
@@ -40,8 +40,32 @@ const useStyles = makeStyles(theme => ({
   },
   tallySection: {
     display: 'flex',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    [theme.breakpoints.down('xs')]: {
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+    },
+  },
+  tallySectionPartOne: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    [theme.breakpoints.down('xs')]: {
+      width: '100%',
+    },
+  },
+  tallySectionPartTwo: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    [theme.breakpoints.down('xs')]: {
+      width: '100%',
+      marginBottom: '1rem'
+    },
   },
   categorySelect: {
     width: '125px',
@@ -54,10 +78,33 @@ const useStyles = makeStyles(theme => ({
       width: '60%',
     },
   },
+  analyzePanel: {
+    width: '100%',
+    marginTop: '2rem',
+    [theme.breakpoints.up('md')]: {
+      marginTop: 0,
+      width: '30%',
+    },
+  },
   numContainer: {
     display: 'flex',
-    flexDirection: 'column',
-    margin: '0 2rem',
+    flexDirection: 'row',
+    margin: '0 .5rem',
+    [theme.breakpoints.down('xs')]: {
+      flex: 1,
+    },
+  },
+  expensePara: {
+    marginLeft: '1rem',
+    marginRight: '1rem',
+  },
+  expense: {
+    marginTop: 0,
+    color: 'red',
+  },
+  income: {
+    margin: 0,
+    color: 'green',
   },
   addBtnLabel: {
     width: '60px',
@@ -135,7 +182,7 @@ export default function TallyTable() {
   const categories = useSelector(state => state.categories);
 
   const [rows, setRows] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date('2019-07-01'));
+  const [selectedDate, setSelectedDate] = useState(new Date('2023-01-01'));
 
   const [categoryInfo, setCategoryInfo] = useState({
     categoryList: [],
@@ -162,8 +209,12 @@ export default function TallyTable() {
     });
   }
   // 添加账单modal的回调函数
-  const handleOpen = () => {
+  const handleAddBill = () => {
     setOpen(true);
+  };
+  // 添加账单分类
+  const handleAddCategory = () => {
+    console.log('add category');
   };
 
   const handleClose = () => {
@@ -211,58 +262,70 @@ export default function TallyTable() {
         </Typography>
 
         <section className={classes.tallySection}>
-          <MuiPickersUtilsProvider utils={DateFnsUtils}>
-            <DatePicker
-              variant="inline"
-              openTo="month"
-              views={["year", "month"]}
-              helperText="选择时间范围"
-              format="yyyy.MM"
-              autoOk={true}
-              value={selectedDate}
-              onChange={handleDateChange}
-            />
-          </MuiPickersUtilsProvider>
+          <div className={classes.tallySectionPartOne}>
+            <MuiPickersUtilsProvider utils={DateFnsUtils}>
+              <DatePicker
+                variant="inline"
+                openTo="month"
+                views={["year", "month"]}
+                helperText="选择时间范围"
+                format="yyyy.MM"
+                autoOk={true}
+                value={selectedDate}
+                onChange={handleDateChange}
+              />
+            </MuiPickersUtilsProvider>
 
-          <div className={classes.numContainer}>
-            <p>
-              支出 <span>{expense}</span>
-            </p>
-            <p>
-              收入 <span>{income}</span>
-            </p>
+            <div className={classes.numContainer}>
+              <div className={classes.expensePara}>
+                支出
+                <p className={classes.expense}>{expense}</p>
+              </div>
+              <div>
+                收入
+                <p className={classes.income}>{income}</p>
+              </div>
+            </div>
           </div>
-          <div className={classes.addBtnContainer}>
-            <Button variant="contained"
-                startIcon={<AddIcon />}
+          <div className={classes.tallySectionPartTwo}>
+            <FormControl className={classes.formControl}>
+              <Select
+                className={classes.categorySelect}
+                value={categoryInfo.value}
+                displayEmpty
+                onChange={handleCategoryChange}
+              >
+                <MenuItem value="">
+                全部
+                </MenuItem>
+                {
+                  categoryInfo.categoryList.map(category => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))
+                }
+              </Select>
+              <FormHelperText>账单分类筛选</FormHelperText>
+            </FormControl>
+
+            <div className={classes.addBtnContainer}>
+              <Button variant="contained"
                 classes={{
                   label: classes.addBtnLabel
                 }}
-                onClick={handleOpen} color="primary">
-                添加
+                onClick={handleAddCategory} color="primary">
+                添加分类
               </Button>
+              <Button variant="contained"
+                classes={{
+                  label: classes.addBtnLabel
+                }}
+                onClick={handleAddBill} color="primary">
+                添加账单
+              </Button>
+            </div>
           </div>
-          <FormControl className={classes.formControl}>
-            <Select
-              className={classes.categorySelect}
-              value={categoryInfo.value}
-              displayEmpty
-              onChange={handleCategoryChange}
-            >
-              <MenuItem value="">
-              全部
-              </MenuItem>
-              {
-                categoryInfo.categoryList.map(category => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category.name}
-                  </MenuItem>
-                ))
-              }
-            </Select>
-            <FormHelperText>账单分类筛选</FormHelperText>
-          </FormControl>
-
         </section>
 
         <TableContainer className={classes.tableContainer} component={Paper}>
@@ -282,7 +345,7 @@ export default function TallyTable() {
                   <TableCell component="th" scope="row">
                     {formatDate(new Date(row.time))}
                   </TableCell>
-                  <TableCell align="right">{TALLY_TYPE_MAP[row.type]}</TableCell>
+                  <TableCell align="right">{row.type}</TableCell>
                   <TableCell align="right">{row.category}</TableCell>
                   <TableCell align="right">{row.amount}</TableCell>
                 </TableRow>
@@ -299,7 +362,10 @@ export default function TallyTable() {
         </TableContainer>
 
       </section>
-      <TallyAnalyze analyzeData={analyzeData} />
+      <section className={classes.analyzePanel}>
+        <TallyAnalyze analyzeData={analyzeData} />
+      </section>
+      
     </div>
     <AddTallyModal open={open} categories={categories}
       handleClose={handleClose} handleSubmitSuccess={handleAddTallySuccess} />

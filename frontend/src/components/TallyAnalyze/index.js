@@ -1,24 +1,11 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Typography from '@material-ui/core/Typography';
 
-const useStyles = makeStyles(theme => ({
-  root: {
-    width: '35%',
-    marginTop: '2rem',
-    [theme.breakpoints.up('md')]: {
-      marginTop: 0,
-    },
-  },
-}));
-
 export default function TallyAnalyze({analyzeData}) {
   const { data, total } = analyzeData;
-  const classes = useStyles();
-
   return (
-    <div className={classes.root}>
+    <>
       <Typography variant="h4" gutterBottom>
         支出排行
       </Typography>
@@ -34,6 +21,6 @@ export default function TallyAnalyze({analyzeData}) {
             暂无数据
           </Typography>
       }
-    </div>
+    </>
   );
 }
