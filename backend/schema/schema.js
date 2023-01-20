@@ -7,7 +7,7 @@ const {
   GraphQLString,
   GraphQLSchema,
   GraphQLList,
-  GraphQLInt,
+  GraphQLFloat,
   GraphQLNonNull,
   GraphQLEnumType,
 } = require('graphql');
@@ -29,7 +29,7 @@ const BillType = new GraphQLObjectType({
     description: { type: GraphQLString },
     time: { type: GraphQLString },
     type: { type: GraphQLString },
-    amount: { type: GraphQLInt },
+    amount: { type: GraphQLFloat },
     category: {
       type: CategoryType,
       resolve(parent, args) {
@@ -110,7 +110,7 @@ const mutation = new GraphQLObjectType({
             }
           })
         },
-        amount: { type: GraphQLNonNull(GraphQLInt) },
+        amount: { type: GraphQLNonNull(GraphQLFloat) },
         categoryId: { type: GraphQLNonNull(GraphQLID) },
       },
       resolve(parent, args) {
@@ -139,7 +139,7 @@ const mutation = new GraphQLObjectType({
       args: {
         id: { type: GraphQLNonNull(GraphQLID) },
         description: { type: GraphQLString },
-        amount: { type: GraphQLInt },
+        amount: { type: GraphQLFloat },
         time: { type: GraphQLString },
         type: {
           type: new GraphQLEnumType({

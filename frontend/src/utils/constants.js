@@ -289,7 +289,7 @@ export const TALLY_TYPE_MAP = {
   1: '收入',
 };
 export const TALLY_TYPE_MATCH = {
-  EXPENSE: 0,
-  INCOME: 1,
+  EXPENSE: 'Expense',
+  INCOME: 'Income',
 };
 

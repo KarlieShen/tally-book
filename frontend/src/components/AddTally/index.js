@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useMutation } from "@apollo/client";
-// import ADD_Bill from "../../model/add-bill";
+import ADD_Bill from "../../model/add-bill";
+import GET_BILL_LIST from '../../model/get-bill-list';
 // import { useDispatch  } from 'react-redux';
 // import { addCategory } from '../../store/actions';
 import { makeStyles } from '@material-ui/core/styles';
@@ -86,7 +87,19 @@ const today = dateFns.format(new Date(), 'yyyy-MM-dd');
 
 const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
   const classes = useStyles();
-  // const [addBill, { data, loading, error }] = useMutation(ADD_Bill);
+  const [addBill] = useMutation(ADD_Bill, {
+    onCompleted: () => {
+      handleSubmitSuccess(formValues.time);
+      handleCloseModal();
+    },
+    update(cache, { data: { addBill }}) {
+      const { bills } = cache.readQuery({ query: GET_BILL_LIST });
+      cache.writeQuery({
+        query: GET_BILL_LIST,
+        data: { bills: [...bills, addBill] }
+      })
+    }
+  });
 
   // const dispatch = useDispatch();
   const categoryInfo = useSelector(state => state.categories);
@@ -95,7 +108,7 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
     time: new Date(),
     description: '',
     type: 'Expense',
-    category: '',
+    categoryId: '',
     amount: '',
   };
   // 表单信息
@@ -133,7 +146,7 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
     reset();
     handleClose();
   }
-  // submit new tally
+  // add new bill
   const handleSubmit = async (event) => {
     event.preventDefault();
      const params = {
@@ -141,21 +154,11 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
       description: formValues.description,
       type: formValues.type,
       amount: parseFloat(formValues.amount),
-      category: formValues.category
+      categoryId: formValues.categoryId
     }
-    console.log('add', params);
-    // const res = addBill({
-    //   variables: params
-    // });
-    // const res = await addTally(params)
-    //   .catch(err => {
-    //   });
-    // if (res?.code === 0) {
-    //   // dispatch(addCategory(params));
-    // } else {
-    // }
-    // handleSubmitSuccess(formValues.time);
-    // handleCloseModal();
+    addBill({
+      variables: params
+    });
   };
 
   return (
@@ -244,9 +247,9 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
             <FormControl className={classes.formControl} required={true}>
               <FormLabel className={classes.formLabel}>category</FormLabel>
               <Select
-                name="category"
+                name="categoryId"
                 className={classes.categorySelect}
-                value={formValues.category}
+                value={formValues.categoryId}
                 onChange={handleDescAndTypeAndCategoryChange}
               >
                 {

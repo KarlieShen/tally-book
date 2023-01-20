@@ -1,14 +1,29 @@
 import { gql } from "@apollo/client";
 
 const ADD_Bill = gql`
-  mutation addBill($description: String!) {
-    addBill(description: $description) {
-      description
+  mutation addBill(
+    $description: String!,
+    $categoryId: ID!,
+    $time: String!,
+    $amount: Float!,
+    $type: BillKind!
+  ) {
+    addBill(
+      description: $description,
+      categoryId: $categoryId,
+      time: $time,
+      amount: $amount,
+      type: $type
+    ) {
       id
+      description
       time
       amount
-      category
       type
+      category {
+        id
+        name
+      }
     }
   }
 `;

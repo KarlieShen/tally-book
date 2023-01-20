@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useMutation } from "@apollo/client";
 import DELETE_BILL from '../../model/delete.bill';
+import GET_BILL_LIST from '../../model/get-bill-list';
 import { useSelector } from 'react-redux';
-import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -22,93 +22,20 @@ import { DatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import { TALLY_TYPE_MATCH } from '../../utils/constants';
 import AddTallyModal from '../AddTally';
 import { Snackbar } from '@material-ui/core';
-import GET_BILL_LIST from '../../model/get-bill-list';
-
-const useStyles = makeStyles(theme => ({
-  root: {
-    padding: '2rem',
-    minWidth: 500,
-  },
-  table: {
-    minWidth: 500,
-  },
-  emptyRow: {
-    textAlign: 'center',
-  },
-  tallySection: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    [theme.breakpoints.down('xs')]: {
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-    },
-  },
-  tallySectionPartOne: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    [theme.breakpoints.down('xs')]: {
-      width: '100%',
-    },
-  },
-  tallySectionPartTwo: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    [theme.breakpoints.down('xs')]: {
-      width: '100%',
-      marginBottom: '1rem'
-    },
-  },
-  categorySelect: {
-    width: '130px',
-    marginRight: '1rem'
-  },
-  dataPanel: {
-    display: 'flex',
-    flexDirection: 'column',
-    width: '100%',
-  },
-  analyzePanel: {
-    width: '100%',
-    marginTop: '2rem',
-    [theme.breakpoints.up('md')]: {
-      marginTop: 0,
-      width: '30%',
-    },
-  },
-  numContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    margin: '0',
-  },
-  expensePara: {
-    marginLeft: '1rem',
-    marginRight: '1rem',
-  },
-  expense: {
-    marginTop: 0,
-    color: 'red',
-  },
-  income: {
-    margin: 0,
-    color: 'green',
-  },
-}));
+import useStyles from './style';
 
 const calcMoney = (arr, type) => {
-  let res = 0;
+  let expense = 0;
+  let income = 0;
   arr?.forEach((item) => {
-    if (item.type === type) {
-      res += item.amount;
+    if (item.type === TALLY_TYPE_MATCH.EXPENSE) {
+      expense += item.amount;
+    } else {
+      income += item.amount;
     }
   });
-  return res;
+
+  return [expense, income];
 }
 const filterMonthInfo = (arr, date) => {
   return arr?.filter(item => {
@@ -181,7 +108,14 @@ export default function TallyTable() {
         message: 'delete failed',
       });
     },
-    refetchQueries: [{ query: GET_BILL_LIST }],
+    // refetchQueries: [{ query: GET_BILL_LIST }],
+    update(cache, { data: { deleteBill }}) {
+      const { bills } = cache.readQuery({ query: GET_BILL_LIST });
+      cache.writeQuery({
+        query: GET_BILL_LIST,
+        data: { bills: bills.filter(bill => bill.id !== deleteBill.id) }
+      })
+    }
   });
 
   const [rows, setRows] = useState([]);
@@ -189,8 +123,7 @@ export default function TallyTable() {
 
   const [categoryId, setCategoryId] = useState('');
 
-  const expense = useMemo(() => calcMoney(rows, TALLY_TYPE_MATCH.EXPENSE), [rows]);
-  const income = useMemo(() => calcMoney(rows, TALLY_TYPE_MATCH.INCOME), [rows]);
+  const [expense, income] = useMemo(() => calcMoney(rows), [rows]);
 
   const [open, setOpen] = useState(false);
 
@@ -205,14 +138,6 @@ export default function TallyTable() {
     const { value } = event.target;
     setCategoryId(value);
   }
-  // 添加账单modal的回调函数
-  const handleAddBill = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
 
   const handleAddTallySuccess = (date) => {
     setSelectedDate(date);
@@ -301,7 +226,7 @@ export default function TallyTable() {
                 classes={{
                   label: classes.addBtnLabel
                 }}
-                onClick={handleAddBill} color="primary">
+                onClick={() => setOpen(true)} color="primary">
                 Add Bill
               </Button>
             </div>
@@ -355,13 +280,13 @@ export default function TallyTable() {
     <AddTallyModal
       open={open}
       categories={categories}
-      handleClose={handleClose}
+      handleClose={() => setOpen(false)}
       handleSubmitSuccess={handleAddTallySuccess}
     />
     <Snackbar
       open={deleteFeedback.open}
       anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      autoHideDuration={6000}
+      autoHideDuration={2000}
       onClose={handleCloseDeleteBillFeedback}
       message={deleteFeedback.message}
     />

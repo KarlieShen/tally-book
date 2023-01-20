@@ -6,9 +6,28 @@ import store from './store';
 import './index.css';
 import App from './App';
 
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        bills: {
+          merge(existing, incoming) {
+            return incoming;
+          }
+        },
+        categories: {
+          merge(existing, incoming) {
+            return incoming;
+          }
+        }
+      }
+    }
+  }
+})
+
 const client = new ApolloClient({
   uri: 'http://localhost:5000/graphql',
-  cache: new InMemoryCache(),
+  cache,
 })
 
 ReactDOM.render(
