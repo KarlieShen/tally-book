@@ -2,13 +2,13 @@ import TallyDetail from './components/TallyDetail';
 import { useQuery } from '@apollo/client';
 import { useEffect } from 'react';
 import GET_CATEGORY_LIST from './model/get-category-list';
-import GET_TALLY_LIST from './model/get-tally-list';
+import GET_BILL_LIST from './model/get-bill-list';
 import store from './store';
-import { getCategoryInfo, getTallyList } from './store/actions';
+import { getCategoryInfo, getBillList } from './store/actions';
 
 function App() {
   const { loading: categoryListLoading , error: categoryListError ,data: categoryList } = useQuery(GET_CATEGORY_LIST);
-  const { loading: tallyListLoading, error: tallyListError, data: tallyList } = useQuery(GET_TALLY_LIST);
+  const { loading: tallyListLoading, error: tallyListError, data: tallyList } = useQuery(GET_BILL_LIST);
 
   useEffect(() => {
     console.log('categoryList', categoryList);
@@ -17,7 +17,7 @@ function App() {
 
   useEffect(() => {
     console.log('tallyList', tallyList);
-    tallyList?.bills && store.dispatch(getTallyList(tallyList.bills));
+    tallyList?.bills && store.dispatch(getBillList(tallyList.bills));
   }, [tallyList]);
 
   if (categoryListLoading || tallyListLoading) return <p>Loading...</p>;

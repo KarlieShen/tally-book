@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useMutation } from "@apollo/client";
+import DELETE_BILL from '../../model/delete.bill';
 import { useSelector } from 'react-redux';
 import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
@@ -9,28 +11,23 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import Select from "@material-ui/core/Select";
+import Button from '@material-ui/core/Button';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
 import FormControl from '@material-ui/core/FormControl';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import MenuItem from "@material-ui/core/MenuItem";
 import DateFnsUtils from '@date-io/date-fns';
 import { DatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import { formatDate } from '../../utils/util';
 import { TALLY_TYPE_MATCH } from '../../utils/constants';
 import AddTallyModal from '../AddTally';
-import TallyAnalyze from '../TallyAnalyze';
-import { Button } from '@material-ui/core';
-import Typography from '@material-ui/core/Typography';
+import { Snackbar } from '@material-ui/core';
+import GET_BILL_LIST from '../../model/get-bill-list';
 
 const useStyles = makeStyles(theme => ({
   root: {
-    padding: '1rem',
-    minWidth: '300px',
-    display: 'flex',
-    flexDirection: 'column',
-    [theme.breakpoints.up('md')]: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
+    padding: '2rem',
+    minWidth: 500,
   },
   table: {
     minWidth: 500,
@@ -68,15 +65,13 @@ const useStyles = makeStyles(theme => ({
     },
   },
   categorySelect: {
-    width: '125px',
+    width: '130px',
+    marginRight: '1rem'
   },
   dataPanel: {
     display: 'flex',
     flexDirection: 'column',
     width: '100%',
-    [theme.breakpoints.up('md')]: {
-      width: '60%',
-    },
   },
   analyzePanel: {
     width: '100%',
@@ -89,10 +84,8 @@ const useStyles = makeStyles(theme => ({
   numContainer: {
     display: 'flex',
     flexDirection: 'row',
-    margin: '0 .5rem',
-    [theme.breakpoints.down('xs')]: {
-      flex: 1,
-    },
+    justifyContent: 'flex-end',
+    margin: '0',
   },
   expensePara: {
     marginLeft: '1rem',
@@ -106,24 +99,8 @@ const useStyles = makeStyles(theme => ({
     margin: 0,
     color: 'green',
   },
-  addBtnLabel: {
-    width: '60px',
-  }
 }));
-// 格式化列表数据
-function formatInfo(info, categories) {
-  return info?.map((item, index) => {
-    const categoryObj = categories.find(category => category.id === item.category);
-    const category = categoryObj?.name;
 
-    return {
-      ...item,
-      category,
-      categoryId: categoryObj?.id,
-      id: index,
-    }
-  }).sort((a, b) => a.time - b.time); 
-}
 const calcMoney = (arr, type) => {
   let res = 0;
   arr?.forEach((item) => {
@@ -139,62 +116,85 @@ const filterMonthInfo = (arr, date) => {
       && new Date(item.time).getFullYear() === date.getFullYear();
   })
 }
-// 获取支出排行组件数据
-const handleAnalyze = (rows, categories) => {
-  let total = 0;
-  const formatData =  rows?.reduce((accu, curr) => {
-    if (curr.type === 0) {
-      total += curr.amount;
-      const categoryObj = categories.find(category => category.id === curr.categoryId);
-      const category = categoryObj?.name;
+// // 获取支出排行组件数据
+// const handleAnalyze = (rows, categories) => {
+//   let total = 0;
+//   const formatData =  rows?.reduce((accu, curr) => {
+//     if (curr.type === 0) {
+//       total += curr.amount;
+//       const categoryObj = categories.find(category => category.id === curr.categoryId);
+//       const category = categoryObj?.name;
 
-      const params = {
-        number: accu[curr.categoryId] ? accu[curr.categoryId].number + curr.amount : curr.amount,
-        frequency: accu[curr.categoryId] ? ++accu[curr.categoryId].frequency : 1,
-        category,
-      }
-      accu[curr.categoryId] = params;
-      return accu;
-    } else {
-      return accu;
-    }
-  }, {});
-  const keys = formatData ? Object.keys(formatData) : [];
-  const data = keys.map(categoryId => {
-    formatData[categoryId] = {
-      ...formatData[categoryId],
-      categoryId,
-    }
-    return formatData[categoryId];
-  });
-  data.sort((a, b) => b.number - a.number);
+//       const params = {
+//         number: accu[curr.categoryId] ? accu[curr.categoryId].number + curr.amount : curr.amount,
+//         frequency: accu[curr.categoryId] ? ++accu[curr.categoryId].frequency : 1,
+//         category,
+//       }
+//       accu[curr.categoryId] = params;
+//       return accu;
+//     } else {
+//       return accu;
+//     }
+//   }, {});
+//   const keys = formatData ? Object.keys(formatData) : [];
+//   const data = keys.map(categoryId => {
+//     formatData[categoryId] = {
+//       ...formatData[categoryId],
+//       categoryId,
+//     }
+//     return formatData[categoryId];
+//   });
+//   data.sort((a, b) => b.number - a.number);
 
-  return {
-    data,
-    total,
-  };
-}
+//   return {
+//     data,
+//     total,
+//   };
+// }
 
 
 export default function TallyTable() {
   const classes = useStyles();
   const tallyInfo = useSelector(state => state.tallyInfo);
   const categories = useSelector(state => state.categories);
+  const [deleteFeedback, setDeleteFeedback] = useState({
+    open: false,
+    message: '',
+  })
+  const handleCloseDeleteBillFeedback = () => {
+    setDeleteFeedback({
+      open: false,
+      message: '',
+    });
+  }
+ 
+  const [deleteBill] = useMutation(DELETE_BILL, {
+    onCompleted: () => {
+      setDeleteFeedback({
+        open: true,
+        message: 'delete success',
+      });
+    },
+    onError: () => {
+      setDeleteFeedback({
+        open: true,
+        message: 'delete failed',
+      });
+    },
+    refetchQueries: [{ query: GET_BILL_LIST }],
+  });
 
   const [rows, setRows] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date('2023-01-01'));
+  const [selectedDate, setSelectedDate] = useState(new Date(Date.now()));
 
-  const [categoryInfo, setCategoryInfo] = useState({
-    categoryList: [],
-    value: '',
-  });
+  const [categoryId, setCategoryId] = useState('');
 
   const expense = useMemo(() => calcMoney(rows, TALLY_TYPE_MATCH.EXPENSE), [rows]);
   const income = useMemo(() => calcMoney(rows, TALLY_TYPE_MATCH.INCOME), [rows]);
 
   const [open, setOpen] = useState(false);
 
-  const analyzeData = useMemo(() => handleAnalyze(rows, categories), [rows, categories]);
+  // const analyzeData = useMemo(() => handleAnalyze(rows, categories), [rows, categories]);
 
   const handleDateChange = (val) => {
     console.log('handleDateChange', val);
@@ -203,18 +203,11 @@ export default function TallyTable() {
 
   const handleCategoryChange = (event) => {
     const { value } = event.target;
-    setCategoryInfo({
-      ...categoryInfo,
-      value,
-    });
+    setCategoryId(value);
   }
   // 添加账单modal的回调函数
   const handleAddBill = () => {
     setOpen(true);
-  };
-  // 添加账单分类
-  const handleAddCategory = () => {
-    console.log('add category');
   };
 
   const handleClose = () => {
@@ -225,42 +218,34 @@ export default function TallyTable() {
     setSelectedDate(date);
   }
 
+  const handleDeleteBill = (id) => {
+    deleteBill({
+      variables: {
+        id,
+      }
+    })
+  }
+
   const filterRowsFn = () => {
-    let data = formatInfo(tallyInfo, categories);
-    if (categoryInfo.value) {
-      data = data.filter(item => item.categoryId === categoryInfo.value);
+    let data = tallyInfo;
+    if (categoryId) {
+      data = data.filter(item => item['category'].id === categoryId);
     }
     data = filterMonthInfo(data, selectedDate);
+    data.sort((a, b) => a.time - b.time);
     setRows(data);
   };
   // 条件变化时筛选列表数据
-  const handleFilterRows = useCallback(filterRowsFn, [
-    categoryInfo.value,
-    selectedDate,
-    tallyInfo,
-    categories
-  ])
-  // 初始化账单分类信息
-  useEffect(() => {
-    setCategoryInfo({
-      categoryList: categories,
-      value: '',
-    });
-  }, [categories]);
+  const handleFilterRows = useCallback(filterRowsFn, [categoryId, selectedDate, tallyInfo])
 
   useEffect(() => {
     handleFilterRows();
   }, [handleFilterRows]);
 
-
   return (
     <>
     <div className={classes.root}>
       <section className={classes.dataPanel}>
-        <Typography variant="h4" gutterBottom>
-          账单明细
-        </Typography>
-
         <section className={classes.tallySection}>
           <div className={classes.tallySectionPartOne}>
             <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -268,7 +253,7 @@ export default function TallyTable() {
                 variant="inline"
                 openTo="month"
                 views={["year", "month"]}
-                helperText="选择时间范围"
+                helperText="choose time span"
                 format="yyyy.MM"
                 autoOk={true}
                 value={selectedDate}
@@ -278,35 +263,37 @@ export default function TallyTable() {
 
             <div className={classes.numContainer}>
               <div className={classes.expensePara}>
-                支出
+                Expense
                 <p className={classes.expense}>{expense}</p>
               </div>
               <div>
-                收入
+                Income
                 <p className={classes.income}>{income}</p>
               </div>
             </div>
           </div>
           <div className={classes.tallySectionPartTwo}>
-            <FormControl className={classes.formControl}>
+            <FormControl>
               <Select
                 className={classes.categorySelect}
-                value={categoryInfo.value}
+                value={categoryId}
                 displayEmpty
                 onChange={handleCategoryChange}
               >
                 <MenuItem value="">
-                全部
+                All
                 </MenuItem>
                 {
-                  categoryInfo.categoryList.map(category => (
-                    <MenuItem key={category.id} value={category.id}>
-                      {category.name}
+                  categories.map(category => (
+                    <MenuItem
+                      key={category.id}
+                      value={category.id}
+                    >{category.name}
                     </MenuItem>
                   ))
                 }
               </Select>
-              <FormHelperText>账单分类筛选</FormHelperText>
+              <FormHelperText>Filter Bill Category</FormHelperText>
             </FormControl>
 
             <div className={classes.addBtnContainer}>
@@ -314,15 +301,8 @@ export default function TallyTable() {
                 classes={{
                   label: classes.addBtnLabel
                 }}
-                onClick={handleAddCategory} color="primary">
-                添加分类
-              </Button>
-              <Button variant="contained"
-                classes={{
-                  label: classes.addBtnLabel
-                }}
                 onClick={handleAddBill} color="primary">
-                添加账单
+                Add Bill
               </Button>
             </div>
           </div>
@@ -332,28 +312,37 @@ export default function TallyTable() {
           <Table className={classes.table} aria-label="simple table">
             <TableHead>
               <TableRow>
-                <TableCell>账单时间</TableCell>
-                <TableCell align="right">账单类型</TableCell>
-                <TableCell align="right">账单分类</TableCell>
-                <TableCell align="right">账单金额</TableCell>
+                <TableCell align="left">description</TableCell>
+                <TableCell align="left">time</TableCell>
+                <TableCell align="left">type</TableCell>
+                <TableCell align="left">category</TableCell>
+                <TableCell align="left">amount</TableCell>
+                <TableCell align='left'></TableCell>
 
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows?.map((row, index) => (
-                <TableRow key={`${index}-${row.time}`}>
-                  <TableCell component="th" scope="row">
-                    {formatDate(new Date(row.time))}
+              {rows?.map(row => (
+                <TableRow key={row.id}>
+                  <TableCell align="left">{row.description}</TableCell>
+                  <TableCell align="left">{row.time}</TableCell>
+                  <TableCell align="left">{row.type}</TableCell>
+                  <TableCell align="left">{row.category?.name}</TableCell>
+                  <TableCell align="left">{row.amount}</TableCell>
+                  <TableCell align='left'>
+                    <IconButton
+                      aria-label="delete"
+                      onClick={() => handleDeleteBill(row.id)} 
+                    >
+                      <DeleteIcon/>
+                    </IconButton>
                   </TableCell>
-                  <TableCell align="right">{row.type}</TableCell>
-                  <TableCell align="right">{row.category}</TableCell>
-                  <TableCell align="right">{row.amount}</TableCell>
                 </TableRow>
               ))}
               {
                 rows?.length === 0
                 ? <TableRow style={{ height: '200px' }}>
-                    <TableCell colSpan={6} className={classes.emptyRow}>暂无数据</TableCell>
+                    <TableCell colSpan={6} className={classes.emptyRow}>Empty</TableCell>
                   </TableRow>
                 : null
               }
@@ -362,13 +351,20 @@ export default function TallyTable() {
         </TableContainer>
 
       </section>
-      <section className={classes.analyzePanel}>
-        <TallyAnalyze analyzeData={analyzeData} />
-      </section>
-      
     </div>
-    <AddTallyModal open={open} categories={categories}
-      handleClose={handleClose} handleSubmitSuccess={handleAddTallySuccess} />
+    <AddTallyModal
+      open={open}
+      categories={categories}
+      handleClose={handleClose}
+      handleSubmitSuccess={handleAddTallySuccess}
+    />
+    <Snackbar
+      open={deleteFeedback.open}
+      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      autoHideDuration={6000}
+      onClose={handleCloseDeleteBillFeedback}
+      message={deleteFeedback.message}
+    />
     </>
   );
 }

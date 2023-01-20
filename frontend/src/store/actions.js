@@ -1,5 +1,5 @@
-export const getTallyList = options => ({
-  type: 'GET_TALLY_LIST',
+export const getBillList = options => ({
+  type: 'GET_BILL_LIST',
   options,
 });
 

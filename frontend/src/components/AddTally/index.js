@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useMutation } from "@apollo/client";
+// import ADD_Bill from "../../model/add-bill";
 // import { useDispatch  } from 'react-redux';
 // import { addCategory } from '../../store/actions';
 import { makeStyles } from '@material-ui/core/styles';
-import addTally from '../../model/add-tally';
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -16,18 +17,18 @@ import Button from "@material-ui/core/Button";
 import Modal from '@material-ui/core/Modal';
 import DateFnsUtils from '@date-io/date-fns';
 import { KeyboardDatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import { formatDate } from '../../utils/util';
+import { useSelector } from "react-redux";
 
 const useStyles = makeStyles((theme) => ({
   title: {
     textAlign: 'center',
-    fontSize: '18px',
-    lineHeight: '18px',
+    fontSize: '24px',
+    lineHeight: '22px',
     width: '100%',
-    marginBottom: '2em',
+    marginBottom: '1em',
   },
   formContainer: {
-    padding: '30px 50px',
+    padding: '20px',
     height: '400px',
     display: 'flex',
     flexDirection: 'column',
@@ -49,9 +50,10 @@ const useStyles = makeStyles((theme) => ({
   },
   formLabel: {
     marginRight: '20px',
+    width: '140px',
   },
-  amountInput: {
-    width: '190px',
+  descriptionInput: {
+    width: '302px',
   },
   categorySelect: {
     width: '250px',
@@ -67,56 +69,46 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  paper: {
-    backgroundColor: theme.palette.background.paper,
-    border: '2px solid #000',
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing(2, 4, 3),
+  addCategoryBtn: {
+    padding: '3px',
+    fontSize: '12px',
+    marginLeft: '3px',
   }
+  // paper: {
+  //   backgroundColor: theme.palette.background.paper,
+  //   border: '2px solid #000',
+  //   boxShadow: theme.shadows[5],
+  //   padding: theme.spacing(2, 4, 3),
+  // }
 }));
-
-const today = formatDate(new Date());
+const dateFns = new DateFnsUtils();
+const today = dateFns.format(new Date(), 'yyyy-MM-dd');
 
 const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
   const classes = useStyles();
-  // const dispatch = useDispatch();
+  // const [addBill, { data, loading, error }] = useMutation(ADD_Bill);
 
-  const [categoryInfo, setCategoryInfo] = useState({
-    categoryList: [],
-    value: '',
-    mark: 0,
-  });
-  const [amount, setAmount] = useState('');
+  // const dispatch = useDispatch();
+  const categoryInfo = useSelector(state => state.categories);
 
   const defaultFormValues = {
     time: new Date(),
-    type: '0',
+    description: '',
+    type: 'Expense',
+    category: '',
+    amount: '',
   };
   // 表单信息
   const [formValues, setFormValues] = useState(defaultFormValues);
 
-  const handleInputChange = (e) => {
+  const handleDescAndTypeAndCategoryChange = (e) => {
     const { name, value } = e.target;
     setFormValues({
       ...formValues,
       [name]: value,
     });
-    if (name === 'type') {
-      const data = categories.filter(item => item.type === Number(value));
-      setCategoryInfo({
-        value: '',
-        categoryList: data,
-        mark: Number(value)
-      });
-    }
   };
-  const handleCategoryChange = (event) => {
-    const { value } = event.target;
-    setCategoryInfo({
-      ...categoryInfo,
-      value,
-    });
-  }
+
   const handleDateChange = (value) => {
     setFormValues({
       ...formValues,
@@ -127,26 +119,15 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
     const { value } = event.target;
 
     if (!isNaN(Number(value)) && /^(([1-9]{1}\d*)|(0{1}))(\.\d{0,2})?$/.test(value)) {
-      setAmount(value);
+      setFormValues({
+        ...formValues,
+        amount: value,
+      });
     }
-
-  }
-  const handleMarkChange = (event) => {
-    const { value } = event.target;
-    setCategoryInfo({
-      ...categoryInfo,
-      mark: value,
-    });
   }
   // 关闭Modal后重置数据
   const reset = () => {
     setFormValues(defaultFormValues);
-    setAmount('');
-    setCategoryInfo({
-      categoryList: categories,
-      value: '',
-      mark: 0,
-    })
   }
   const handleCloseModal = () => {
     reset();
@@ -155,37 +136,27 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
   // submit new tally
   const handleSubmit = async (event) => {
     event.preventDefault();
-    let lastAmount = 0;
-    if (categoryInfo.mark === 0) {
-      lastAmount = 0 - amount;
-    } else {
-      lastAmount = amount - 0;
-    }
      const params = {
-      time: formValues.time.getTime(),
-      type: Number(formValues.type),
-      amount: parseFloat(lastAmount),
-      category: categoryInfo.value
+      time: dateFns.format(formValues.time, 'yyyy-MM-dd'),
+      description: formValues.description,
+      type: formValues.type,
+      amount: parseFloat(formValues.amount),
+      category: formValues.category
     }
-    const res = await addTally(params)
-      .catch(err => {
-      });
-    if (res?.code === 0) {
-      // dispatch(addCategory(params));
-    } else {
-    }
-    handleSubmitSuccess(formValues.time);
-    handleCloseModal();
+    console.log('add', params);
+    // const res = addBill({
+    //   variables: params
+    // });
+    // const res = await addTally(params)
+    //   .catch(err => {
+    //   });
+    // if (res?.code === 0) {
+    //   // dispatch(addCategory(params));
+    // } else {
+    // }
+    // handleSubmitSuccess(formValues.time);
+    // handleCloseModal();
   };
-
-    // 初始化账单分类信息
-    useEffect(() => {
-      setCategoryInfo({
-        categoryList: categories?.filter(item => item.type === 0),
-        value: '',
-        mark: 0,
-      });
-    }, [categories]);
 
   return (
     <>
@@ -196,10 +167,10 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
     >
       <form onSubmit={handleSubmit} className={classes.formContainer}>
         <Grid container alignItems="baseline" direction="column">
-          <p className={classes.title}>添加账单</p>
+          <p className={classes.title}>Add Bill</p>
           <Grid item>
             <FormControl className={classes.formControl} required={true}>
-              <FormLabel className={classes.formLabel}>消费时间</FormLabel>
+              <FormLabel className={classes.formLabel}>operate time</FormLabel>
               <MuiPickersUtilsProvider utils={DateFnsUtils}>
                 <KeyboardDatePicker
                   placeholder={today}
@@ -214,25 +185,40 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
           </Grid>
 
           <Grid item>
+            <FormControl className={classes.formControl} required={true}>
+              <FormLabel className={classes.formLabel}>description</FormLabel>
+              <TextField
+                name="description"
+                label="please input bill description"
+                className={classes.descriptionInput}
+                type="text"
+                value={formValues.description}
+                required={true}
+                onChange={handleDescAndTypeAndCategoryChange}
+              />
+            </FormControl>
+          </Grid>
+
+          <Grid item>
             <FormControl className={`${classes.formControl} ${classes.typeForm}`} required={true}>
-              <FormLabel className={classes.formLabel}>账单类型</FormLabel>
+              <FormLabel className={classes.formLabel}>type</FormLabel>
               <RadioGroup
                 name="type"
                 value={formValues.type}
-                onChange={handleInputChange}
+                onChange={handleDescAndTypeAndCategoryChange}
                 row
               >
                 <FormControlLabel
-                  key="0"
-                  value="0"
+                  key="Expense"
+                  value="Expense"
                   control={<Radio size="small" />}
-                  label="支出"
+                  label="Expense"
                 />
                 <FormControlLabel
-                  key="1"
-                  value="1"
+                  key="Income"
+                  value="Income"
                   control={<Radio size="small" />}
-                  label="收入"
+                  label="Income"
                 />
 
               </RadioGroup>
@@ -241,26 +227,13 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
 
           <Grid item>
             <FormControl className={classes.formControl} required={true}>
-              <FormLabel className={classes.formLabel}>交易金额</FormLabel>
-              <Select
-                value={categoryInfo.mark}
-                className={classes.markSelect}
-                onChange={handleMarkChange}
-              >
-                <MenuItem value={0}>
-                -
-                </MenuItem>
-                <MenuItem value={1}>
-                +
-                </MenuItem>
-              </Select>
+              <FormLabel className={classes.formLabel}>amount</FormLabel>
               <TextField
                 autoComplete="off"
                 name="amount"
-                label="请填写交易金额"
-                className={classes.amountInput}
+                label="please input bill amount"
                 type="text"
-                value={amount}
+                value={formValues.amount}
                 required={true}
                 onChange={handleAmountChange}
               />
@@ -269,51 +242,48 @@ const AddTally = ({open, handleClose, handleSubmitSuccess, categories}) => {
           
           <Grid item>
             <FormControl className={classes.formControl} required={true}>
-              <FormLabel className={classes.formLabel}>详细分类</FormLabel>
+              <FormLabel className={classes.formLabel}>category</FormLabel>
               <Select
                 name="category"
                 className={classes.categorySelect}
-                value={categoryInfo.value}
-                onChange={handleCategoryChange}
+                value={formValues.category}
+                onChange={handleDescAndTypeAndCategoryChange}
               >
                 {
-                  categoryInfo.categoryList.map(category => (
-                    <MenuItem key={category.id} value={category.id}>
+                  categoryInfo.map(category => (
+                    <MenuItem
+                      key={category.id}
+                      value={category.id}>
                       {category.name}
                     </MenuItem>
                   ))
                 }
               </Select>
+              <Button
+                className={classes.addCategoryBtn}
+                variant="outlined"
+                size="small"
+                color="primary"
+              >Add Category</Button>
             </FormControl>
           </Grid>
 
 
         </Grid>
         <div className={classes.btnContainer}>
-          <Button variant="contained"
-            color="primary" type="submit"
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
             classes={{
               root: classes.btnRoot
             }}
           >
-            保存
+            Save
           </Button>
         </div>
       </form>
     </Modal>
-    {/* <Snackbar
-      anchorOrigin={{vertical: 'top', horizontal: 'center'}}
-      open={snackInfo.open}
-      onClose={handleClose}
-      message={snackInfo.msg}
-      action={
-        <React.Fragment>
-          <IconButton size="small" aria-label="close" color="inherit" onClick={handleClose}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </React.Fragment>
-      }
-    /> */}
     </>
   );
 };

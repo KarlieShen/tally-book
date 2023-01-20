@@ -5,7 +5,7 @@ const initialState = {
 
 const reducer = (state = initialState, action) => {
   switch (action.type) {
-    case 'GET_TALLY_LIST':
+    case 'GET_BILL_LIST':
       return {
         ...state,
         tallyInfo: action.options
