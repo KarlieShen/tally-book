@@ -20,7 +20,6 @@ import MenuItem from "@material-ui/core/MenuItem";
 import DateFnsUtils from '@date-io/date-fns';
 import { DatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import { TALLY_TYPE_MATCH } from '../../utils/constants';
-import AddTallyModal from '../AddTally';
 import { Snackbar } from '@material-ui/core';
 import useStyles from './style';
 
@@ -43,44 +42,8 @@ const filterMonthInfo = (arr, date) => {
       && new Date(item.time).getFullYear() === date.getFullYear();
   })
 }
-// // 获取支出排行组件数据
-// const handleAnalyze = (rows, categories) => {
-//   let total = 0;
-//   const formatData =  rows?.reduce((accu, curr) => {
-//     if (curr.type === 0) {
-//       total += curr.amount;
-//       const categoryObj = categories.find(category => category.id === curr.categoryId);
-//       const category = categoryObj?.name;
 
-//       const params = {
-//         number: accu[curr.categoryId] ? accu[curr.categoryId].number + curr.amount : curr.amount,
-//         frequency: accu[curr.categoryId] ? ++accu[curr.categoryId].frequency : 1,
-//         category,
-//       }
-//       accu[curr.categoryId] = params;
-//       return accu;
-//     } else {
-//       return accu;
-//     }
-//   }, {});
-//   const keys = formatData ? Object.keys(formatData) : [];
-//   const data = keys.map(categoryId => {
-//     formatData[categoryId] = {
-//       ...formatData[categoryId],
-//       categoryId,
-//     }
-//     return formatData[categoryId];
-//   });
-//   data.sort((a, b) => b.number - a.number);
-
-//   return {
-//     data,
-//     total,
-//   };
-// }
-
-
-export default function TallyTable() {
+function BillTable() {
   const classes = useStyles();
   const tallyInfo = useSelector(state => state.tallyInfo);
   const categories = useSelector(state => state.categories);
@@ -120,27 +83,16 @@ export default function TallyTable() {
 
   const [rows, setRows] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date(Date.now()));
-
   const [categoryId, setCategoryId] = useState('');
-
   const [expense, income] = useMemo(() => calcMoney(rows), [rows]);
 
-  const [open, setOpen] = useState(false);
-
-  // const analyzeData = useMemo(() => handleAnalyze(rows, categories), [rows, categories]);
-
   const handleDateChange = (val) => {
-    console.log('handleDateChange', val);
     setSelectedDate(val);
   }
 
   const handleCategoryChange = (event) => {
     const { value } = event.target;
     setCategoryId(value);
-  }
-
-  const handleAddTallySuccess = (date) => {
-    setSelectedDate(date);
   }
 
   const handleDeleteBill = (id) => {
@@ -226,7 +178,7 @@ export default function TallyTable() {
                 classes={{
                   label: classes.addBtnLabel
                 }}
-                onClick={() => setOpen(true)} color="primary">
+                onClick={() => console.log(true)} color="primary">
                 Add Bill
               </Button>
             </div>
@@ -277,12 +229,7 @@ export default function TallyTable() {
 
       </section>
     </div>
-    <AddTallyModal
-      open={open}
-      categories={categories}
-      handleClose={() => setOpen(false)}
-      handleSubmitSuccess={handleAddTallySuccess}
-    />
+
     <Snackbar
       open={deleteFeedback.open}
       anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
@@ -293,3 +240,5 @@ export default function TallyTable() {
     </>
   );
 }
+
+export default BillTable;
