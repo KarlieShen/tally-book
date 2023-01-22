@@ -1,9 +1,9 @@
-export const getBillList = options => ({
-  type: 'GET_BILL_LIST',
+export const setBillList = options => ({
+  type: 'SET_BILL_LIST',
   options,
 });
 
-export const getCategoryInfo = options => ({
-  type: 'GET_CATEGORY_LIST',
+export const setCategoryInfo = options => ({
+  type: 'SET_CATEGORY_INFO',
   options,
 });

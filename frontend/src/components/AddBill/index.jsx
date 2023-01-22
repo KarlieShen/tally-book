@@ -1,10 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation } from "@apollo/client";
-import ADD_Bill from "../../model/add-bill";
-import GET_BILL_LIST from '../../model/get-bill-list';
-// import { useDispatch  } from 'react-redux';
-// import { addCategory } from '../../store/actions';
-import { makeStyles } from '@material-ui/core/styles';
+import ADD_BILL from "../../model/add-bill";
+import GET_BILL_LIST from "../../model/get-bill-list";
+import { makeStyles } from "@material-ui/core/styles";
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -15,80 +14,79 @@ import Radio from "@material-ui/core/Radio";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
 import Button from "@material-ui/core/Button";
-import DateFnsUtils from '@date-io/date-fns';
+import DateFnsUtils from "@date-io/date-fns";
 import { KeyboardDatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import { useSelector } from "react-redux";
+import AddCategoryModal from "../AddCategoryModal";
+import DeleteCategoryModal from "../DeleteCategoryModal";
 
 const useStyles = makeStyles((theme) => ({
   title: {
-    textAlign: 'center',
-    fontSize: '24px',
-    lineHeight: '22px',
-    width: '100%',
-    marginBottom: '1em',
+    fontSize: "24px",
+    lineHeight: "22px",
+    width: "100%",
+    marginBottom: "1em",
   },
   formContainer: {
-    padding: '20px',
-    height: '400px',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    padding: "20px",
+    height: "400px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
   },
   formControl: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
   },
   markSelect: {
-    marginRight: '20px',
+    marginRight: "20px",
   },
   typeForm: {
-    alignItems: 'center',
-    marginTop: '20px',
+    alignItems: "center",
+    marginTop: "20px",
   },
   formLabel: {
-    marginRight: '20px',
-    width: '140px',
+    marginRight: "20px",
+    width: "140px",
   },
   descriptionInput: {
-    width: '302px',
+    width: "302px",
   },
   categorySelect: {
-    width: '250px',
+    width: "250px",
   },
   btnContainer: {
-    width: '88px',
+    width: "88px",
   },
   btnRoot: {
-    width: '100%',
+    width: "100%",
   },
   modal: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   addCategoryBtn: {
-    padding: '3px',
-    fontSize: '12px',
-    marginLeft: '3px',
-  }
-  // paper: {
-  //   backgroundColor: theme.palette.background.paper,
-  //   border: '2px solid #000',
-  //   boxShadow: theme.shadows[5],
-  //   padding: theme.spacing(2, 4, 3),
-  // }
+    padding: "4px",
+    fontSize: "14px",
+    marginLeft: "1rem",
+  },
 }));
 const dateFns = new DateFnsUtils();
-const today = dateFns.format(new Date(), 'yyyy-MM-dd');
+const today = dateFns.format(new Date(), "yyyy-MM-dd");
 
 const AddBill = () => {
   const classes = useStyles();
-  const [addBill] = useMutation(ADD_Bill, {
+  const navigate = useNavigate();
+
+  const [openAddCategoryModal, setOpenAddCategoryModal] = useState(false);
+  const [openDeleteCategoryModal, setOpenDeleteCategoryModal] = useState(false);
+
+  const [addBill] = useMutation(ADD_BILL, {
     onCompleted: () => {
-      console.log('success');
+      navigate("/");
     },
     update(cache, { data: { addBill }}) {
       const { bills } = cache.readQuery({ query: GET_BILL_LIST });
@@ -99,15 +97,14 @@ const AddBill = () => {
     }
   });
 
-  // const dispatch = useDispatch();
   const categoryInfo = useSelector(state => state.categories);
 
   const defaultFormValues = {
     time: new Date(),
-    description: '',
-    type: 'Expense',
-    categoryId: '',
-    amount: '',
+    description: "",
+    type: "Expense",
+    categoryId: "",
+    amount: "",
   };
   // 表单信息
   const [formValues, setFormValues] = useState(defaultFormValues);
@@ -141,7 +138,7 @@ const AddBill = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
      const params = {
-      time: dateFns.format(formValues.time, 'yyyy-MM-dd'),
+      time: dateFns.format(formValues.time, "yyyy-MM-dd"),
       description: formValues.description,
       type: formValues.type,
       amount: parseFloat(formValues.amount),
@@ -153,124 +150,143 @@ const AddBill = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className={classes.formContainer}>
-      <Grid container alignItems="baseline" direction="column">
-        <p className={classes.title}>Add Bill</p>
-        <Grid item>
-          <FormControl className={classes.formControl} required={true}>
-            <FormLabel className={classes.formLabel}>operate time</FormLabel>
-            <MuiPickersUtilsProvider utils={DateFnsUtils}>
-              <KeyboardDatePicker
-                placeholder={today}
-                disableFuture
-                value={formValues.time}
-                name="time"
-                onChange={val => handleDateChange(val)}
-                format="yyyy/MM/dd"
+    <>
+      <form onSubmit={handleSubmit} className={classes.formContainer}>
+        <Grid container alignItems="baseline" direction="column">
+          <p className={classes.title}>Add Bill</p>
+          <Grid item>
+            <FormControl className={classes.formControl} required={true}>
+              <FormLabel className={classes.formLabel}>operate time</FormLabel>
+              <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                <KeyboardDatePicker
+                  placeholder={today}
+                  disableFuture
+                  value={formValues.time}
+                  name="time"
+                  onChange={val => handleDateChange(val)}
+                  format="yyyy/MM/dd"
+                />
+              </MuiPickersUtilsProvider>
+            </FormControl>
+          </Grid>
+
+          <Grid item>
+            <FormControl className={classes.formControl} required={true}>
+              <FormLabel className={classes.formLabel}>description</FormLabel>
+              <TextField
+                name="description"
+                label="please input bill description"
+                className={classes.descriptionInput}
+                type="text"
+                value={formValues.description}
+                required={true}
+                onChange={handleDescAndTypeAndCategoryChange}
               />
-            </MuiPickersUtilsProvider>
-          </FormControl>
-        </Grid>
+            </FormControl>
+          </Grid>
 
-        <Grid item>
-          <FormControl className={classes.formControl} required={true}>
-            <FormLabel className={classes.formLabel}>description</FormLabel>
-            <TextField
-              name="description"
-              label="please input bill description"
-              className={classes.descriptionInput}
-              type="text"
-              value={formValues.description}
-              required={true}
-              onChange={handleDescAndTypeAndCategoryChange}
-            />
-          </FormControl>
-        </Grid>
+          <Grid item>
+            <FormControl className={`${classes.formControl} ${classes.typeForm}`} required={true}>
+              <FormLabel className={classes.formLabel}>type</FormLabel>
+              <RadioGroup
+                name="type"
+                value={formValues.type}
+                onChange={handleDescAndTypeAndCategoryChange}
+                row
+              >
+                <FormControlLabel
+                  key="Expense"
+                  value="Expense"
+                  control={<Radio size="small" />}
+                  label="Expense"
+                />
+                <FormControlLabel
+                  key="Income"
+                  value="Income"
+                  control={<Radio size="small" />}
+                  label="Income"
+                />
 
-        <Grid item>
-          <FormControl className={`${classes.formControl} ${classes.typeForm}`} required={true}>
-            <FormLabel className={classes.formLabel}>type</FormLabel>
-            <RadioGroup
-              name="type"
-              value={formValues.type}
-              onChange={handleDescAndTypeAndCategoryChange}
-              row
-            >
-              <FormControlLabel
-                key="Expense"
-                value="Expense"
-                control={<Radio size="small" />}
-                label="Expense"
+              </RadioGroup>
+            </FormControl>
+          </Grid>
+
+          <Grid item>
+            <FormControl className={classes.formControl} required={true}>
+              <FormLabel className={classes.formLabel}>amount</FormLabel>
+              <TextField
+                autoComplete="off"
+                name="amount"
+                label="please input bill amount"
+                type="text"
+                value={formValues.amount}
+                required={true}
+                onChange={handleAmountChange}
               />
-              <FormControlLabel
-                key="Income"
-                value="Income"
-                control={<Radio size="small" />}
-                label="Income"
-              />
+            </FormControl>
+          </Grid>
+          
+          <Grid item>
+            <FormControl className={classes.formControl} required={true}>
+              <FormLabel className={classes.formLabel}>category</FormLabel>
+              <Select
+                name="categoryId"
+                className={classes.categorySelect}
+                value={formValues.categoryId}
+                onChange={handleDescAndTypeAndCategoryChange}
+              >
+                {
+                  categoryInfo.map(category => (
+                    <MenuItem
+                      key={category.id}
+                      value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))
+                }
+              </Select>
+              <Button
+                className={classes.addCategoryBtn}
+                variant="outlined"
+                size="small"
+                color="primary"
+                onClick={() => setOpenAddCategoryModal(true)}
+              >Add Category</Button>
 
-            </RadioGroup>
-          </FormControl>
+              <Button
+                className={classes.addCategoryBtn}
+                variant="outlined"
+                size="small"
+                color="primary"
+                onClick={() => setOpenDeleteCategoryModal(true)}
+              >Delete Category</Button>
+            </FormControl>
+          </Grid>
+
+
         </Grid>
-
-        <Grid item>
-          <FormControl className={classes.formControl} required={true}>
-            <FormLabel className={classes.formLabel}>amount</FormLabel>
-            <TextField
-              autoComplete="off"
-              name="amount"
-              label="please input bill amount"
-              type="text"
-              value={formValues.amount}
-              required={true}
-              onChange={handleAmountChange}
-            />
-          </FormControl>
-        </Grid>
-        
-        <Grid item>
-          <FormControl className={classes.formControl} required={true}>
-            <FormLabel className={classes.formLabel}>category</FormLabel>
-            <Select
-              name="categoryId"
-              className={classes.categorySelect}
-              value={formValues.categoryId}
-              onChange={handleDescAndTypeAndCategoryChange}
-            >
-              {
-                categoryInfo.map(category => (
-                  <MenuItem
-                    key={category.id}
-                    value={category.id}>
-                    {category.name}
-                  </MenuItem>
-                ))
-              }
-            </Select>
-            <Button
-              className={classes.addCategoryBtn}
-              variant="outlined"
-              size="small"
-              color="primary"
-            >Add Category</Button>
-          </FormControl>
-        </Grid>
-
-
-      </Grid>
-      <div className={classes.btnContainer}>
-        <Button
-          variant="contained"
-          color="primary"
-          type="submit"
-          classes={{
-            root: classes.btnRoot
-          }}
-        >
-          Save
-        </Button>
-      </div>
-    </form>
+        <div className={classes.btnContainer}>
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            classes={{
+              root: classes.btnRoot
+            }}
+          >
+            Save
+          </Button>
+        </div>
+      </form>
+      <AddCategoryModal
+        open={openAddCategoryModal}
+        onClose={() => setOpenAddCategoryModal(false)}
+      />
+      <DeleteCategoryModal
+        open={openDeleteCategoryModal}
+        onClose={() => setOpenDeleteCategoryModal(false)}
+      />
+    </>
   );
 };
 

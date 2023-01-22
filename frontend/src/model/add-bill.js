@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client";
 
-const ADD_Bill = gql`
+const ADD_BILL = gql`
   mutation addBill(
     $description: String!,
     $categoryId: ID!,
@@ -28,4 +28,4 @@ const ADD_Bill = gql`
   }
 `;
 
-export default ADD_Bill;
+export default ADD_BILL;

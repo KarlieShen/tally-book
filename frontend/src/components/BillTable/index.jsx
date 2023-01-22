@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate } from "react-router-dom";
 import { useMutation } from "@apollo/client";
 import DELETE_BILL from '../../model/delete.bill';
 import GET_BILL_LIST from '../../model/get-bill-list';
@@ -34,7 +35,7 @@ const calcMoney = (arr, type) => {
     }
   });
 
-  return [expense, income];
+  return [expense.toFixed(2), income.toFixed(2)];
 }
 const filterMonthInfo = (arr, date) => {
   return arr?.filter(item => {
@@ -45,6 +46,7 @@ const filterMonthInfo = (arr, date) => {
 
 function BillTable() {
   const classes = useStyles();
+  const navigate = useNavigate();
   const tallyInfo = useSelector(state => state.tallyInfo);
   const categories = useSelector(state => state.categories);
   const [deleteFeedback, setDeleteFeedback] = useState({
@@ -178,7 +180,7 @@ function BillTable() {
                 classes={{
                   label: classes.addBtnLabel
                 }}
-                onClick={() => console.log(true)} color="primary">
+                onClick={() => navigate("/add-bill")} color="primary">
                 Add Bill
               </Button>
             </div>
@@ -233,7 +235,7 @@ function BillTable() {
     <Snackbar
       open={deleteFeedback.open}
       anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      autoHideDuration={2000}
+      autoHideDuration={1000}
       onClose={handleCloseDeleteBillFeedback}
       message={deleteFeedback.message}
     />
